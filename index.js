@@ -25,10 +25,10 @@ class Player {
         this.frameY = 0;
         this.frameCount = 0;
         this.maxFrame = 6; 
-        
+
     }
     // pintar en base a la fila de la imagen del sprite del jugador
-    draw() {
+    draw(camX, camY) {
         if (this.status === 'idle') {
             if (this.direction === 'down') this.frameY = 0;
             if (this.direction === 'right') this.frameY = 1;
@@ -41,6 +41,9 @@ class Player {
             if (this.direction === 'left') this.frameY = 4; 
         }
 
+        const drawX = this.x - camX;
+        const drawY = this.y - camY;
+
         // En el sprite no viene las imagenes de la direccion izquierda, asi que las volteo aqui
         if (this.direction === 'left') {
             ctx.save();
@@ -48,14 +51,14 @@ class Player {
             ctx.drawImage(
                 this.image,
                 this.frameX * this.ancho, this.frameY * this.alto, this.ancho, this.alto,
-                -this.x - this.ancho, this.y, this.ancho, this.alto  
+                -drawX - this.ancho, drawY, this.ancho, this.alto  
             );
             ctx.restore();
         } else {
             ctx.drawImage(
                 this.image,
                 this.frameX * this.ancho, this.frameY * this.alto, this.ancho, this.alto,
-                this.x, this.y, this.ancho, this.alto
+                drawX, drawY, this.ancho, this.alto
             );
         }
     }
@@ -102,17 +105,24 @@ window.addEventListener('keyup', (e) => {
 
 const player = new Player(150, 200, 96, 96, playerSprite, 1); 
 
+let camX = 0;
+let camY = 0;
+
 function update() {
     // Limpiar
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Mapa
-    ctx.drawImage(map, -200, -100);
-
+    ctx.drawImage(map, -200 - camX, -150 - camY);   
     // Jugador
     player.move(input);
     player.updateAnimation();
-    player.draw();
+
+    // Mover camara
+    camX = player.x - canvas.width / 2 + player.ancho / 2;
+    camY = player.y - canvas.height / 2 + player.alto / 2;
+
+    player.draw(camX, camY);
 
     requestAnimationFrame(update);
 }
