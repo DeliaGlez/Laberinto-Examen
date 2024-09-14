@@ -24,7 +24,7 @@ class Player {
         this.frameX = 0;
         this.frameY = 0;
         this.frameCount = 0;
-        this.maxFrame = 6; 
+        this.maxFrame = 6;
 
     }
     // pintar en base a la fila de la imagen del sprite del jugador
@@ -47,7 +47,7 @@ class Player {
         // En el sprite no viene las imagenes de la direccion izquierda, asi que las volteo aqui
         if (this.direction === 'left') {
             ctx.save();
-            ctx.scale(-1, 1); 
+            ctx.scale(-1, 1);
             ctx.drawImage(
                 this.image,
                 this.frameX * this.ancho, this.frameY * this.alto, this.ancho, this.alto,
@@ -103,17 +103,17 @@ window.addEventListener('keyup', (e) => {
     delete input[e.key];
 });
 
-const player = new Player(150, 200, 96, 96, playerSprite, 1); 
+const player = new Player(350, 350, 96, 96, playerSprite, 1); 
 
-let camX = 0;
-let camY = 0;
+let camX = player.x - canvas.width / 2 + player.ancho / 2;
+let camY = player.y - canvas.height / 2 + player.alto / 2;
 
 function update() {
     // Limpiar
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Mapa
-    ctx.drawImage(map, -200 - camX, -150 - camY);   
+    ctx.drawImage(map, -camX, -camY);   
     // Jugador
     player.move(input);
     player.updateAnimation();
@@ -123,7 +123,7 @@ function update() {
     camY = player.y - canvas.height / 2 + player.alto / 2;
 
     player.draw(camX, camY);
-
+    
     requestAnimationFrame(update);
 }
 
