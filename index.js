@@ -112,35 +112,23 @@ class Player {
         if (this.status === 'idle') {
             if (this.direction === 'down') this.frameY = 0;
             if (this.direction === 'right') this.frameY = 1;
-            if (this.direction === 'up') this.frameY = 2;
-            if (this.direction === 'left') this.frameY = 1;  
+            if (this.direction === 'up') this.frameY = 3;
+            if (this.direction === 'left') this.frameY = 2;  
         } else if (this.status === 'move') {
-            if (this.direction === 'down') this.frameY = 3;
-            if (this.direction === 'right') this.frameY = 4;
-            if (this.direction === 'up') this.frameY = 5;
-            if (this.direction === 'left') this.frameY = 4; 
+            if (this.direction === 'down') this.frameY = 4;
+            if (this.direction === 'right') this.frameY = 5;
+            if (this.direction === 'up') this.frameY = 7;
+            if (this.direction === 'left') this.frameY = 6; 
         }
 
         const drawX = this.x - camX;
         const drawY = this.y - camY;
 
-        // En el sprite no viene las imagenes de la direccion izquierda, asi que las volteo aqui
-        if (this.direction === 'left') {
-            ctx.save();
-            ctx.scale(-1, 1);
-            ctx.drawImage(
-                this.image,
-                this.frameX * this.width, this.frameY * this.height, this.width, this.height,
-                -drawX - this.width, drawY, this.width, this.height  
-            );
-            ctx.restore();
-        } else {
-            ctx.drawImage(
-                this.image,
-                this.frameX * this.width, this.frameY * this.height, this.width, this.height,
-                drawX, drawY, this.width, this.height
-            );
-        }
+        ctx.drawImage(
+            this.image,
+            this.frameX * this.width, this.frameY * this.height, this.width, this.height,
+            drawX, drawY, this.width, this.height
+        );
     }
 
     move(input) {
