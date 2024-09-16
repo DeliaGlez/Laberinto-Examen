@@ -7,8 +7,61 @@ map.src = './img/map.png';
 const playerSprite = new Image();
 playerSprite.src = './img/player.png'; 
 
+const tileSize = 32; 
+const mapWidth = 100; // ancho de tiles del mapa
+const mapHeight = 100; 
+
+const collisionMap = getCollisionMap(); // De array a Matriz
+const tileDimensions = { x: 0, y: 0, width: tileSize, height: tileSize };
+const symbolSolidObjects = {
+    561: 'wall',
+};
+
+function getCollisionMap() { // De array de tiles solidos a Matriz
+    const collisionMap = [];
+    for (let i = 0; i < mapHeight; i++) {
+        const row = [];
+        for (let j = 0; j < mapWidth; j++) {
+            row.push(collisions[i * mapWidth + j]);
+        }
+        collisionMap.push(row);
+    }
+    return collisionMap;
+}
+
+function isRectCollision(rect1, rect2) {
+    return rect1.x < rect2.x + rect2.width &&
+           rect1.x + rect1.width > rect2.x &&
+           rect1.y < rect2.y + rect2.height &&
+           rect1.y + rect1.height > rect2.y;
+}
+
+function isCollisionWithObject(x, y, width, height) {
+    const isCollisionWithTile = (playerX, playerY) => {
+        const tileX = Math.floor(playerX / tileSize);
+        const tileY = Math.floor(playerY / tileSize);
+        
+        if (tileX >= 0 && tileX < mapWidth && tileY >= 0 && tileY < mapHeight) {
+            const tileValue = collisionMap[tileY][tileX];
+            if (symbolSolidObjects[tileValue]) {
+                tileDimensions.x = tileX * tileSize;
+                tileDimensions.y = tileY * tileSize;
+                if (isRectCollision({ x, y, width, height }, tileDimensions)) {
+                    return symbolSolidObjects[tileValue]; 
+                }
+            }
+        }
+        return null;
+    };
+    // verificar tambien las esquinas 
+    return isCollisionWithTile(x, y) ||
+           isCollisionWithTile(x + width, y) ||
+           isCollisionWithTile(x, y + height) ||
+           isCollisionWithTile(x + width, y + height);
+}
+
 class Player {
-    constructor(x, y, ancho, alto, image, speed) {
+    constructor(x, y, width, height, image, speed) {
         this.health = 3;
         this.score = 0;
 
@@ -16,8 +69,8 @@ class Player {
         this.x = x;
         this.y = y;
         this.speed = speed;
-        this.ancho = ancho;  
-        this.alto = alto;   
+        this.width = width;  
+        this.height = height;   
         this.image = image;
         this.direction = 'down';  
         this.status = 'idle'; // idle, move, attack, death
@@ -25,8 +78,14 @@ class Player {
         this.frameY = 0;
         this.frameCount = 0;
         this.maxFrame = 6;
-
+        this.hitbox = {
+            x: this.x + 36,
+            y: this.y + 30,
+            width: 24,
+            height: 35
+        };
     }
+
     // pintar en base a la fila de la imagen del sprite del jugador
     draw(camX, camY) {
         if (this.status === 'idle') {
@@ -50,39 +109,59 @@ class Player {
             ctx.scale(-1, 1);
             ctx.drawImage(
                 this.image,
-                this.frameX * this.ancho, this.frameY * this.alto, this.ancho, this.alto,
-                -drawX - this.ancho, drawY, this.ancho, this.alto  
+                this.frameX * this.width, this.frameY * this.height, this.width, this.height,
+                -drawX - this.width, drawY, this.width, this.height  
             );
             ctx.restore();
         } else {
             ctx.drawImage(
                 this.image,
-                this.frameX * this.ancho, this.frameY * this.alto, this.ancho, this.alto,
-                drawX, drawY, this.ancho, this.alto
+                this.frameX * this.width, this.frameY * this.height, this.width, this.height,
+                drawX, drawY, this.width, this.height
             );
         }
     }
 
     move(input) {
+        let newHitBoxX = this.hitbox.x;
+        let newHitBoxY = this.hitbox.y;
+        let newX = this.x;
+        let newY = this.y;
+
+        // Movimiento del jugador
         if (input['ArrowUp'] || input['w']) {
-            this.y -= this.speed;
+            newHitBoxY -= this.speed;
+            newY -= this.speed;
             this.direction = 'up';
             this.status = 'move';
         } else if (input['ArrowDown'] || input['s']) {
-            this.y += this.speed;
+            newHitBoxY += this.speed;
+            newY += this.speed;
             this.direction = 'down';
             this.status = 'move';
         } else if (input['ArrowLeft'] || input['a']) {
-            this.x -= this.speed;
+            newHitBoxX -= this.speed;
+            newX -= this.speed;
             this.direction = 'left';
             this.status = 'move';
         } else if (input['ArrowRight'] || input['d']) {
-            this.x += this.speed;
+            newHitBoxX += this.speed;
+            newX += this.speed;
             this.direction = 'right';
             this.status = 'move';
         } else {
-            this.status = 'idle';  
+            this.status = 'idle';
         }
+
+        const collisionType = isCollisionWithObject(newHitBoxX, newHitBoxY, this.hitbox.width, this.hitbox.height);
+        if (!collisionType ) { 
+            this.x = newX;
+            this.y = newY;
+            this.hitbox.x = this.x + 36;
+            this.hitbox.y = this.y + 30;
+        }
+
+        this.updateAnimation();
     }
 
     updateAnimation() {
@@ -105,8 +184,8 @@ window.addEventListener('keyup', (e) => {
 
 const player = new Player(350, 350, 96, 96, playerSprite, 1); 
 
-let camX = player.x - canvas.width / 2 + player.ancho / 2;
-let camY = player.y - canvas.height / 2 + player.alto / 2;
+let camX = player.x - canvas.width / 2 + player.width / 2;
+let camY = player.y - canvas.height / 2 + player.height / 2;
 
 function update() {
     // Limpiar
@@ -116,14 +195,17 @@ function update() {
     ctx.drawImage(map, -camX, -camY);   
     // Jugador
     player.move(input);
-    player.updateAnimation();
 
     // Mover camara
-    camX = player.x - canvas.width / 2 + player.ancho / 2;
-    camY = player.y - canvas.height / 2 + player.alto / 2;
+    camX = player.x - canvas.width / 2 + player.width / 2;
+    camY = player.y - canvas.height / 2 + player.height / 2;
 
     player.draw(camX, camY);
-    
+    // Ver hitbox
+    ctx.beginPath();
+    ctx.rect(player.hitbox.x - camX, player.hitbox.y - camY, player.hitbox.width, player.hitbox.height);
+    ctx.stroke();
+
     requestAnimationFrame(update);
 }
 
