@@ -7,9 +7,16 @@ map.src = './img/map.png';
 const playerSprite = new Image();
 playerSprite.src = './img/player.png'; 
 
+let startTime = Date.now(); 
+let time = 0; 
+
 const tileSize = 32; 
 const mapWidth = 100; // ancho de tiles del mapa
 const mapHeight = 100; 
+
+const ambientSound = new Audio('./audio/ambient.mp3'); 
+ambientSound.loop = true; 
+ambientSound.volume = 0.5; 
 
 const collisionMap = getCollisionMap(); // De array a Matriz
 const tileDimensions = { x: 0, y: 0, width: tileSize, height: tileSize };
@@ -59,6 +66,20 @@ function isCollisionWithObject(x, y, width, height) {
            isCollisionWithTile(x, y + height) ||
            isCollisionWithTile(x + width, y + height);
 }
+function formatTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+function drawTime() {
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'white';
+    const formattedTime = formatTime(time);
+    ctx.fillText('T i e m p o: ' + formattedTime, 10, 30);
+}
+
 
 class Player {
     constructor(x, y, width, height, image, speed) {
@@ -129,22 +150,22 @@ class Player {
         let newY = this.y;
 
         // Movimiento del jugador
-        if (input['ArrowUp'] || input['w']) {
+        if (input['ArrowUp'] || input['w']|| input['W']) {
             newHitBoxY -= this.speed;
             newY -= this.speed;
             this.direction = 'up';
             this.status = 'move';
-        } else if (input['ArrowDown'] || input['s']) {
+        } else if (input['ArrowDown'] || input['s']|| input['S']) {
             newHitBoxY += this.speed;
             newY += this.speed;
             this.direction = 'down';
             this.status = 'move';
-        } else if (input['ArrowLeft'] || input['a']) {
+        } else if (input['ArrowLeft'] || input['a']|| input['A']) {
             newHitBoxX -= this.speed;
             newX -= this.speed;
             this.direction = 'left';
             this.status = 'move';
-        } else if (input['ArrowRight'] || input['d']) {
+        } else if (input['ArrowRight'] || input['d']|| input['D']) {
             newHitBoxX += this.speed;
             newX += this.speed;
             this.direction = 'right';
@@ -190,9 +211,12 @@ let camY = player.y - canvas.height / 2 + player.height / 2;
 function update() {
     // Limpiar
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
     // Mapa
     ctx.drawImage(map, -camX, -camY);   
+    //tiempo
+    time = Math.floor((Date.now() - startTime) / 1000); 
+    drawTime();
     // Jugador
     player.move(input);
 
@@ -211,4 +235,5 @@ function update() {
 
 map.onload = () => {
     update();
+    //ambientSound.play();
 };
