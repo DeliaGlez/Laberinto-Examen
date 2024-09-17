@@ -14,10 +14,37 @@ keySprite.src = './img/key.png';
 const spikeSprite = new Image();
 spikeSprite.src = './img/spike.png'; 
 
+const startImage = new Image();
+startImage.src = './img/start.png';
+
+const gameOverImage = new Image();
+gameOverImage.src = './img/gameOver.png';
+
+const winImage = new Image();
+winImage.src = './img/win.png';
+
+const heartImage = new Image();
+heartImage.src = './img/heart.png';
+
+const keyImage = new Image();
+keyImage.src = './img/barKey.png';
+
 //Sonido
 const ambientSound = new Audio('./audio/ambient.mp3'); 
 ambientSound.loop = true; 
 ambientSound.volume = 0.5; 
+
+const winSound = new Audio('./audio/win.mp3');
+winSound.volume = 0.5;
+
+const hurtSound = new Audio('./audio/hurt.mp3');
+hurtSound.volume = 0.5;
+
+const keySound = new Audio('./audio/key.mp3');
+keySound.volume = 0.5;
+
+const JAJASound = new Audio('./audio/gameOver.mp3');
+JAJASound.volume = 0.5;
 
 let startTime = Date.now(); 
 let time = 0; 
@@ -30,6 +57,7 @@ const collisionMap = getCollisionMap(); // De array a Matriz
 const tileDimensions = { x: 0, y: 0, width: tileSize, height: tileSize };
 let keys = []; 
 let spikes=[];
+let gameState = 'start'; 
 
 const symbolSolidObjects = {
     561: 'wall',
@@ -41,7 +69,14 @@ const symbolSolidObjects = {
 const input = {};
 window.addEventListener('keydown', (e) => {
     input[e.key] = true;
+
+    if (e.key === 'Enter') {
+        if (gameState === 'start' || gameState === 'won' || gameState === 'gameOver') {
+            resetGame();
+        }
+    }
 });
+
 window.addEventListener('keyup', (e) => {
     delete input[e.key];
 });
@@ -64,6 +99,24 @@ function drawCollisions(camX, camY) {
 }*/
 
 
+function resetGame() {
+    keys = []; 
+    spikes=[];
+    player.health = 3;
+    player.haskey = false;
+    player.x = 3200;
+    player.y = 4200;
+    gameState = 'playing';
+    won = false;
+    gameOver = false;
+    startTime = Date.now(); 
+    generateItems();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    winSound.pause();
+    winSound.currentTime = 0;
+    ambientSound.play();
+
+}
 function isRectCollision(rect1, rect2) {
     return rect1.x < rect2.x + rect2.width &&
            rect1.x + rect1.width > rect2.x &&
@@ -83,7 +136,6 @@ function isCollisionWithObject(x, y, width, height) {
                 tileDimensions.x = tileX * tileSize;
                 tileDimensions.y = tileY * tileSize;
                 if (isRectCollision({ x, y, width, height }, tileDimensions)) {
-                    console.log(objectType)
 
                     return objectType; 
                 }
@@ -105,12 +157,7 @@ function formatTime(seconds) {
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
-function drawTime() {
-    ctx.font = '20px Arial';
-    ctx.fillStyle = 'white';
-    const formattedTime = formatTime(time);
-    ctx.fillText('T i e m p o: ' + formattedTime, 10, 30);
-}
+
 
 function generateItems() { 
     for (let i = 0; i < mapHeight; i++) {
@@ -230,10 +277,7 @@ class Player {
             this.status = 'idle';
         }
         const currentTime = Date.now();
-        if(this.health===0){
-            //this.maxFrame = 3;
-            //this.status='death'
-        }
+        
         const collisionType = isCollisionWithObject(newHitBoxX, newHitBoxY, this.hitbox.width, this.hitbox.height);
         if (!collisionType || collisionType === 'spikes'|| collisionType === 'key'|| collisionType === 'door') {
             this.x = newX;
@@ -243,18 +287,23 @@ class Player {
 
             // Mecanica de los picos
             if (collisionType === 'spikes' && currentTime - this.lastDamageTime > this.damageCooldown) {
-                this.health = (this.health - 1 >= 0) ? this.health - 1 : 0; 
-                this.lastDamageTime = currentTime; 
-                console.log('AUCH, vidas:', this.health);
+                if (this.health > 0) {
+                    this.health -= 1;
+                    this.lastDamageTime = currentTime;
+                    hurtSound.play(); 
+                    if (this.health === 0) {
+                        gameState = 'gameOver';
+                        ambientSound.pause(); 
+                        JAJASound.play();
+                    }
+                }
             }
 
             // Mecanica de la salida
             if (collisionType === 'door') {
                 if (player.haskey){
                     won=true;
-                    console.log('Gano')
-                }else{
-                    console.log('no puede salir sin la llave')
+                    gameState='won';
                 }
             }
             
@@ -264,8 +313,8 @@ class Player {
             if (!key.isCollected) {
                 if (isRectCollision(this.hitbox, key)) {
                     this.haskey=true;
+                    keySound.play()
                     key.collect(); 
-                    console.log('pick');
                 }
             }
         });
@@ -289,38 +338,115 @@ const player = new Player(3200, 4200, 96, 96, playerSprite, 2);
 let camX = player.x - canvas.width / 2 + player.width / 2;
 let camY = player.y - canvas.height / 2 + player.height / 2;
 
-function update() {
-    // Limpiar
+function drawStartScreen() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Mapa
-    ctx.drawImage(map, -camX, -camY);   
-    //drawCollisions(camX, camY);
+    ctx.drawImage(startImage, 0, 0, canvas.width, canvas.height);
+}
 
-    //// Dibujar objetos
-    drawKeys(camX, camY);
-    drawSpikes(camX, camY);
+function drawGameOverScreen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(gameOverImage, 0, 0, canvas.width, canvas.height);
+}
+
+function drawWinScreen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(winImage, 0, 0, canvas.width, canvas.height);
+}
+
+function drawStatusBar() {
+    const barHeight = 50; 
+    const barY = canvas.height - barHeight; 
+    const heartSize = 30; 
+    const keySize = 30; 
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, barY, canvas.width, barHeight);
+    // vida
+    for (let i = 0; i < player.health; i++) {
+        ctx.drawImage(heartImage, 10 + i * (heartSize + 10), barY + 10, heartSize, heartSize);
+    }
+    // llave
+    if (player.haskey) {
+        ctx.drawImage(keyImage, canvas.width - keySize - 10, barY + 10, keySize, keySize);
+    }
+
     //tiempo
-    time = Math.floor((Date.now() - startTime) / 1000); 
-    drawTime();
-    // Jugador
-    player.move(input);
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'white';
+    const formattedTime = formatTime(time);
+    ctx.fillText('T i e m p o: ' + formattedTime, 200,canvas.width+60 );
+}
+function update() {
+    
+    if (gameState === 'start') {
+         winSound.pause();
+        drawStartScreen();
+        
+    }
 
-    // Mover camara
-    camX = player.x - canvas.width / 2 + player.width / 2;
-    camY = player.y - canvas.height / 2 + player.height / 2;
+    if (gameState === 'gameOver') {
+        // winSound.pause();
+        // ambientSound.pause();
+        
+        drawGameOverScreen();
+        
+    }
 
-    player.draw(camX, camY);
-    // Ver hitbox
-    ctx.beginPath();
-    ctx.rect(player.hitbox.x - camX, player.hitbox.y - camY, player.hitbox.width, player.hitbox.height);
-    ctx.stroke();
+    if (gameState === 'won') {
+         ambientSound.pause();
+         winSound.play();
+        drawWinScreen();
+        
+    }
+    if (gameState === 'playing') {
+        ambientSound.play();
+        
+        // Limpiar
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Mapa
+        ctx.drawImage(map, -camX, -camY);   
+        //drawCollisions(camX, camY);
+
+        // Dibujar objetos
+        drawKeys(camX, camY);
+        drawSpikes(camX, camY);
+
+        //tiempo
+        time = Math.floor((Date.now() - startTime) / 1000); 
+
+        // Jugador
+        player.move(input);
+
+        // Mover camara
+        camX = player.x - canvas.width / 2 + player.width / 2;
+        camY = player.y - canvas.height / 2 + player.height / 2;
+
+        player.draw(camX, camY);
+
+        // Ver hitbox
+        ctx.beginPath();
+        ctx.rect(player.hitbox.x - camX, player.hitbox.y - camY, player.hitbox.width, player.hitbox.height);
+        ctx.stroke();
+        drawStatusBar();
+    }
 
     requestAnimationFrame(update);
 }
 
-map.onload = () => {
-    generateItems();
-    update();
-    //ambientSound.play();
-};
+
+let imagesLoaded = 0;
+const totalImages = 5; 
+
+map.onload = checkAllImagesLoaded;
+playerSprite.onload = checkAllImagesLoaded;
+keySprite.onload = checkAllImagesLoaded;
+spikeSprite.onload = checkAllImagesLoaded;
+startImage.onload = checkAllImagesLoaded;
+
+function checkAllImagesLoaded() {
+    imagesLoaded++;
+    if (imagesLoaded === totalImages) {
+        generateItems();
+        update();
+    }
+}
