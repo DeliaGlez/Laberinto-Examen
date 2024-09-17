@@ -334,7 +334,7 @@ class Player {
 
 
 
-const player = new Player(3200, 4200, 96, 96, playerSprite, 2); 
+const player = new Player(3200, 4200, 96, 96, playerSprite, 3); 
 
 let camX = player.x - canvas.width / 2 + player.width / 2;
 let camY = player.y - canvas.height / 2 + player.height / 2;
@@ -374,7 +374,9 @@ function drawStatusBar() {
     ctx.font = '20px Arial';
     ctx.fillStyle = 'white';
     const formattedTime = formatTime(time);
-    ctx.fillText('T i e m p o: ' + formattedTime, 200,canvas.width+60 );
+    ctx.fillText('T i e m p o: ' + formattedTime, 200,canvas.width/2+255 );
+    console.log(formattedTime)
+    
 }
 function update() {
     
