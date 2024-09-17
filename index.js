@@ -286,18 +286,19 @@ class Player {
             this.hitbox.y = this.y + 30;
 
             // Mecanica de los picos
-            if (collisionType === 'spikes' && currentTime - this.lastDamageTime > this.damageCooldown) {
-                if (this.health > 0) {
-                    this.health -= 1;
-                    this.lastDamageTime = currentTime;
-                    hurtSound.play(); 
-                    if (this.health === 0) {
-                        gameState = 'gameOver';
-                        ambientSound.pause(); 
-                        JAJASound.play();
-                    }
-                }
+            if (collisionType === 'spikes' && currentTime - this.lastDamageTime > this.damageCooldown && this.health > 0) {
+                this.health -= 1;
+                this.lastDamageTime = currentTime;
+                hurtSound.play(); 
+                
             }
+            if (this.health === 0) {
+                gameState = 'gameOver';
+                ambientSound.pause(); 
+                JAJASound.play();
+            }
+
+
 
             // Mecanica de la salida
             if (collisionType === 'door') {
@@ -423,10 +424,7 @@ function update() {
 
         player.draw(camX, camY);
 
-        // Ver hitbox
-        ctx.beginPath();
-        ctx.rect(player.hitbox.x - camX, player.hitbox.y - camY, player.hitbox.width, player.hitbox.height);
-        ctx.stroke();
+        
         drawStatusBar();
     }
 

@@ -1,14 +1,29 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://t3.ftcdn.net/jpg/05/49/87/48/360_F_549874832_odaIb0fUsf27oYS6qXj392f5673mRSW5.jpg') no-repeat center center fixed; 
+            background-size: cover;
+        }
+
+        canvas {
+            border: 10px solid #fff;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="canvas" width="500" height="576"></canvas>
+    <canvas id="canvas" width="600" height="576"></canvas>
+    <script src="data/collisions.js"></script>
+    <script src="classes/key.js"></script>
+    <script src="index.js"></script>
 </body>
 </html>
-<script src="data/collisions.js"></script>
-<script src="classes/key.js"></script>
-<script src="index.js"></script>
