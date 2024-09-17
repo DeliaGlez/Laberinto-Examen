@@ -10,9 +10,9 @@ playerSprite.src = './img/player.png';
 let startTime = Date.now(); 
 let time = 0; 
 
-const tileSize = 32; 
-const mapWidth = 100; // ancho de tiles del mapa
-const mapHeight = 100; 
+const tileSize = 48; 
+const mapWidth = 130; // ancho de tiles del mapa
+const mapHeight = 130; 
 
 const ambientSound = new Audio('./audio/ambient.mp3'); 
 ambientSound.loop = true; 
@@ -22,6 +22,7 @@ const collisionMap = getCollisionMap(); // De array a Matriz
 const tileDimensions = { x: 0, y: 0, width: tileSize, height: tileSize };
 const symbolSolidObjects = {
     561: 'wall',
+    2684355121:'wall'
 };
 
 function getCollisionMap() { // De array de tiles solidos a Matriz
@@ -191,7 +192,7 @@ window.addEventListener('keyup', (e) => {
     delete input[e.key];
 });
 
-const player = new Player(350, 350, 96, 96, playerSprite, 1); 
+const player = new Player(3200, 4200, 96, 96, playerSprite, 2); 
 
 let camX = player.x - canvas.width / 2 + player.width / 2;
 let camY = player.y - canvas.height / 2 + player.height / 2;
